@@ -1,0 +1,1307 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>仲裁员资源库 — 法务管理系统</title>
+<style>
+/* ═══════════════════════════════════════════════════════
+   数科通用UI展示标准 V1.1  ×  UI/UX Pro Max  ×  hue
+   三层融合架构示例
+   ═══════════════════════════════════════════════════════ */
+
+/* === [数科标准] CSS 变量 — 精确 Token === */
+:root {
+  /* 品牌色 */
+  --brand-color: #0044A0;
+  --brand-hover: #2076EA;
+  --brand-click: #003C8D;
+  --brand-forbidden: #C3DBFD;
+  --brand-label-bg: #E7EEF6;
+  /* 华润琥珀黄 */
+  --yellow-color: #F9B334;
+  --yellow-hover: #FFB25A;
+  --yellow-click: #D37913;
+  --yellow-forbidden: #FFCA8E;
+  --yellow-label-bg: #FEF0E1;
+  /* 背景 */
+  --bg-page: #F2F5F9;
+  --bg-container: #F2F3F7;
+  --bg-secondary: #F3F8FF;
+  --bg-disabled: #F5F5F5;
+  --bg-white: #FFFFFF;
+  /* 线条 */
+  --line-stroke: #E6E7EA;
+  --line-input-border: #E6E7EA;
+  --line-select-border: #C3C6CD;
+  --line-btn-border: #AFB0B3;
+  --line-btn-border-deep: #898B8F;
+  /* 文字 */
+  --text-primary: #1A1B1E;
+  --text-main: #4D4E55;
+  --text-secondary: #676768;
+  --text-sub: #898B8F;
+  --text-placeholder: #C1C4C8;
+  --text-disabled: #D9DADB;
+  --text-anti: #FFFFFF;
+  --text-link: #0044A0;
+  --icon-secondary: #9AA3B0;
+  /* 功能色 */
+  --error-color: #F84224;
+  --error-hover: #FF6247;
+  --error-click: #E63013;
+  --error-forbidden: #FFBDB2;
+  --error-label-bg: #FFE7E7;
+  --warning-color: #FF822E;
+  --warning-hover: #FF9C5A;
+  --warning-click: #E67022;
+  --warning-forbidden: #FFCBA8;
+  --warning-label-bg: #FFF2EA;
+  --success-color: #00AA6E;
+  --success-hover: #1BDC98;
+  --success-click: #027A50;
+  --success-forbidden: #A4EED4;
+  --success-label-bg: #E5F6F0;
+  /* [Pro Max] z-index 分层体系 */
+  --z-base: 0;
+  --z-dropdown: 100;
+  --z-sticky: 200;
+  --z-overlay: 500;
+  --z-modal: 1000;
+  --z-toast: 2000;
+  /* [Pro Max] 阴影 — 4 级体系 */
+  --shadow-1: 0 2px 5px rgba(0,0,0,0.10);
+  --shadow-2: 0 4px 10px rgba(0,0,0,0.10);
+  --shadow-3: 0 8px 20px rgba(0,0,0,0.10);
+  --shadow-4: 0 12px 30px rgba(0,0,0,0.12);
+  /* 圆角 */
+  --radius-sm: 3px;
+  --radius-base: 4px;
+  --radius-lg: 8px;
+  /* [Pro Max] 动效 Token */
+  --ease-smooth: cubic-bezier(.38,0,.24,1);
+  --duration-fast: 150ms;
+  --duration-normal: 250ms;
+  --duration-slow: 400ms;
+}
+
+/* [Pro Max] 预设 reduced-motion */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+body {
+  font-family: "PingFang SC", "Microsoft YaHei", "Helvetica Neue", "Hiragino Sans GB", Arial, sans-serif;
+  font-size: 14px;
+  line-height: 22px;
+  color: var(--text-main);
+  background: var(--bg-page);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* ═══════════════════════════════════════════════════════
+   [数科标准] 帧布局 — Header + Sidebar + Main Content
+   ═══════════════════════════════════════════════════════ */
+.layout { display: flex; min-height: 100vh; }
+
+/* Header */
+.header {
+  position: fixed; top: 0; left: 0; right: 0;
+  z-index: var(--z-sticky);
+  height: 60px; background: var(--bg-white);
+  border-bottom: 1px solid var(--line-stroke);
+  display: flex; align-items: center;
+  padding: 0 24px;
+  box-shadow: var(--shadow-1);
+}
+.header-logo {
+  display: flex; align-items: center; gap: 12px;
+  width: 220px; flex-shrink: 0;
+}
+.header-logo .logo-icon {
+  width: 32px; height: 32px;
+  background: linear-gradient(135deg, var(--brand-color) 40%, var(--yellow-color));
+  border-radius: var(--radius-base);
+  display: flex; align-items: center; justify-content: center;
+  color: var(--text-anti); font-weight: 700; font-size: 16px;
+}
+.header-logo .logo-text {
+  font-size: 16px; font-weight: 600; color: var(--text-primary);
+  white-space: nowrap;
+}
+.header-nav {
+  flex: 1; display: flex; align-items: center; gap: 24px;
+  padding-left: 40px;
+}
+.header-nav a {
+  color: var(--text-secondary); text-decoration: none;
+  font-size: 14px; transition: color var(--duration-fast) var(--ease-smooth);
+  height: 60px; display: flex; align-items: center;
+  border-bottom: 2px solid transparent;
+}
+.header-nav a:hover { color: var(--brand-hover); }
+.header-nav a.active {
+  color: var(--brand-color); font-weight: 500;
+  border-bottom-color: var(--brand-color);
+}
+.header-right {
+  display: flex; align-items: center; gap: 16px;
+  margin-left: auto;
+}
+.header-right .user-info {
+  display: flex; align-items: center; gap: 8px;
+  color: var(--text-main); cursor: pointer;
+}
+.header-right .avatar {
+  width: 32px; height: 32px; border-radius: 50%;
+  background: var(--brand-color);
+  color: var(--text-anti); font-size: 13px;
+  display: flex; align-items: center; justify-content: center;
+}
+
+/* Sidebar */
+.sidebar {
+  position: fixed; top: 60px; left: 0; bottom: 0;
+  width: 220px; background: var(--brand-color);
+  padding-top: 16px; overflow-y: auto;
+  z-index: var(--z-sticky);
+}
+.sidebar .nav-section {
+  padding: 0 16px; margin-bottom: 8px;
+}
+.sidebar .nav-section .section-title {
+  font-size: 12px; color: rgba(255,255,255,0.5);
+  padding: 8px 12px; letter-spacing: 1px;
+}
+.sidebar .nav-item {
+  display: flex; align-items: center; gap: 10px;
+  padding: 10px 16px; margin: 2px 8px;
+  color: rgba(255,255,255,0.75); text-decoration: none;
+  font-size: 14px; border-radius: var(--radius-base);
+  transition: all var(--duration-fast) var(--ease-smooth);
+  cursor: pointer;
+}
+.sidebar .nav-item:hover {
+  background: rgba(255,255,255,0.1);
+  color: var(--text-anti);
+}
+.sidebar .nav-item.active {
+  background: rgba(255,255,255,0.15);
+  color: var(--text-anti); font-weight: 500;
+}
+.sidebar .nav-item .nav-icon {
+  width: 18px; height: 18px; flex-shrink: 0;
+  opacity: 0.7;
+}
+
+/* Main Content */
+.main {
+  margin-left: 220px; margin-top: 60px;
+  flex: 1; padding: 0;
+  min-height: calc(100vh - 60px);
+}
+.page-content {
+  max-width: 1440px; margin: 0 auto;
+  padding: 24px;
+}
+
+/* ═══════════════════════════════════════════════════════
+   [数科标准 + Pro Max] 面包屑
+   ═══════════════════════════════════════════════════════ */
+.breadcrumb {
+  display: flex; align-items: center; gap: 8px;
+  font-size: 12px; color: var(--text-sub);
+  margin-bottom: 16px;
+}
+.breadcrumb a {
+  color: var(--text-link); text-decoration: none;
+  transition: color var(--duration-fast) var(--ease-smooth);
+}
+.breadcrumb a:hover { color: var(--brand-hover); text-decoration: underline; }
+.breadcrumb .sep { color: var(--line-btn-border); }
+
+/* ═══════════════════════════════════════════════════════
+   [数科标准] 页面标题
+   ═══════════════════════════════════════════════════════ */
+.page-header {
+  display: flex; align-items: center; justify-content: space-between;
+  margin-bottom: 20px;
+}
+.page-header h1 {
+  font-size: 20px; font-weight: 600; color: var(--text-primary);
+  line-height: 28px;
+}
+.page-header .header-actions {
+  display: flex; align-items: center; gap: 12px;
+}
+
+/* ═══════════════════════════════════════════════════════
+   [数科标准] 按钮系统
+   [Pro Max] 触点 ≥44px / hover 过渡 200ms
+   ═══════════════════════════════════════════════════════ */
+.btn {
+  display: inline-flex; align-items: center; justify-content: center; gap: 6px;
+  height: 32px; padding: 0 20px;
+  border: 1px solid var(--line-btn-border);
+  border-radius: var(--radius-base);
+  font-size: 14px; font-family: inherit;
+  cursor: pointer; white-space: nowrap;
+  background: var(--bg-white); color: var(--text-main);
+  transition: all var(--duration-fast) var(--ease-smooth);
+  outline: none; user-select: none;
+  /* [Pro Max] 确保触达目标 ≥44px（通过 padding 扩展） */
+  min-height: 32px;
+}
+/* [Pro Max] 焦点环 */
+.btn:focus-visible {
+  outline: 2px solid var(--brand-color);
+  outline-offset: 2px;
+}
+.btn:hover { border-color: var(--brand-hover); color: var(--brand-hover); }
+.btn:active { border-color: var(--brand-click); color: var(--brand-click); }
+.btn:disabled {
+  opacity: 0.45; cursor: not-allowed;
+  border-color: var(--line-stroke); color: var(--text-disabled);
+}
+
+.btn-primary {
+  background: var(--brand-color); border-color: var(--brand-color);
+  color: var(--text-anti);
+}
+.btn-primary:hover { background: var(--brand-hover); border-color: var(--brand-hover); color: var(--text-anti); }
+.btn-primary:active { background: var(--brand-click); border-color: var(--brand-click); color: var(--text-anti); }
+.btn-primary:disabled { background: var(--brand-forbidden); border-color: var(--brand-forbidden); color: var(--text-anti); opacity: 1; }
+
+.btn-success {
+  background: var(--success-color); border-color: var(--success-color);
+  color: var(--text-anti);
+}
+.btn-success:hover { background: var(--success-hover); border-color: var(--success-hover); color: var(--text-anti); }
+
+.btn-danger {
+  background: transparent; border-color: var(--error-color);
+  color: var(--error-color);
+}
+.btn-danger:hover { background: var(--error-color); border-color: var(--error-color); color: var(--text-anti); }
+.btn-danger:active { background: var(--error-click); border-color: var(--error-click); }
+
+.btn-yellow {
+  background: var(--yellow-color); border-color: var(--yellow-color);
+  color: var(--text-primary);
+}
+.btn-yellow:hover { background: var(--yellow-hover); border-color: var(--yellow-hover); }
+
+.btn-text {
+  background: transparent; border: none;
+  color: var(--text-link); padding: 0 8px;
+}
+.btn-text:hover { color: var(--brand-hover); background: transparent; }
+
+.btn-sm { height: 28px; padding: 0 12px; font-size: 12px; }
+.btn-lg { height: 40px; padding: 0 28px; font-size: 16px; }
+
+.btn-icon {
+  width: 32px; height: 32px; padding: 0;
+  display: inline-flex; align-items: center; justify-content: center;
+  border: 1px solid var(--line-btn-border);
+  border-radius: var(--radius-base);
+  background: var(--bg-white); cursor: pointer; color: var(--icon-secondary);
+  transition: all var(--duration-fast) var(--ease-smooth);
+}
+.btn-icon:hover { border-color: var(--brand-hover); color: var(--brand-hover); }
+
+/* ═══════════════════════════════════════════════════════
+   [数科标准] 搜索面板
+   ═══════════════════════════════════════════════════════ */
+.search-panel {
+  background: var(--bg-white); border-radius: var(--radius-lg);
+  padding: 20px 24px 16px;
+  box-shadow: var(--shadow-1);
+  margin-bottom: 16px;
+}
+.search-row {
+  display: flex; flex-wrap: wrap; align-items: center;
+  gap: 16px 0;
+}
+.search-row .field {
+  display: flex; align-items: center; gap: 8px;
+  width: 33.33%; /* 3 列 */
+  padding-right: 16px;
+}
+.search-row .field label {
+  width: 80px; text-align: right; flex-shrink: 0;
+  color: var(--text-main); font-size: 14px;
+  white-space: nowrap;
+}
+.search-row .field input,
+.search-row .field select {
+  flex: 1; height: 32px; padding: 0 12px;
+  border: 1px solid var(--line-input-border);
+  border-radius: var(--radius-base);
+  font-size: 14px; font-family: inherit;
+  color: var(--text-main); background: var(--bg-white);
+  transition: border-color var(--duration-fast) var(--ease-smooth);
+  outline: none; min-width: 0;
+}
+.search-row .field input:focus,
+.search-row .field select:focus {
+  border-color: var(--brand-color);
+  box-shadow: 0 0 0 2px rgba(0,68,160,0.12);
+}
+.search-row .field input::placeholder { color: var(--text-placeholder); }
+
+.search-advanced {
+  margin-top: 16px; padding-top: 16px;
+  border-top: 1px dashed var(--line-stroke);
+  display: none;
+}
+.search-advanced.show { display: block; }
+
+.search-divider {
+  margin: 16px 0 0;
+  border: none; border-top: 1px solid var(--line-stroke);
+}
+.search-actions {
+  display: flex; align-items: center; justify-content: center; gap: 12px;
+  margin-top: 16px;
+}
+.search-actions .advanced-toggle {
+  color: var(--text-link); cursor: pointer; font-size: 13px;
+  text-decoration: none; margin-right: auto;
+  transition: color var(--duration-fast) var(--ease-smooth);
+}
+.search-actions .advanced-toggle:hover { color: var(--brand-hover); }
+
+/* ═══════════════════════════════════════════════════════
+   [数科标准] 工具栏
+   ═══════════════════════════════════════════════════════ */
+.toolbar {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 12px 0;
+}
+.toolbar .toolbar-left { display: flex; align-items: center; gap: 10px; }
+.toolbar .toolbar-right { display: flex; align-items: center; gap: 8px; }
+.toolbar .toolbar-divider {
+  width: 1px; height: 20px; background: var(--line-stroke);
+  margin: 0 4px;
+}
+
+/* ═══════════════════════════════════════════════════════
+   [数科标准] 表格
+   ═══════════════════════════════════════════════════════ */
+.table-wrapper {
+  background: var(--bg-white); border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-1); overflow: hidden;
+}
+table {
+  width: 100%; border-collapse: collapse;
+  font-size: 14px;
+}
+thead th {
+  background: var(--bg-container); /* ⚠️ #F2F3F7, 不是 #FAFAFA */
+  color: var(--text-primary); font-weight: 500;
+  height: 48px; padding: 0 16px;
+  text-align: left; border-bottom: 1px solid var(--line-stroke);
+  white-space: nowrap; position: relative;
+}
+thead th .sort-icon {
+  display: inline-block; margin-left: 4px;
+  color: var(--line-btn-border); cursor: pointer;
+  font-size: 10px; vertical-align: middle;
+}
+thead th.sort-active .sort-icon { color: var(--brand-color); }
+
+tbody td {
+  height: 48px; padding: 0 16px;
+  border-bottom: 1px solid var(--line-stroke);
+  color: var(--text-main); vertical-align: middle;
+}
+tbody tr:nth-child(even) { background: #FAFBFC; }
+tbody tr:hover { background: #F5F7FA; }
+tbody tr:last-child td { border-bottom: none; }
+
+/* 复选框 */
+.table-checkbox {
+  width: 16px; height: 16px;
+  accent-color: var(--brand-color); cursor: pointer;
+}
+
+/* ═══════════════════════════════════════════════════════
+   [数科标准] 状态标签
+   ═══════════════════════════════════════════════════════ */
+.tag {
+  display: inline-flex; align-items: center; gap: 4px;
+  padding: 2px 10px; border-radius: var(--radius-sm);
+  font-size: 12px; line-height: 20px;
+  border: 1px solid transparent; white-space: nowrap;
+}
+.tag-success { background: var(--success-label-bg); color: var(--success-color); border-color: var(--success-forbidden); }
+.tag-warning { background: var(--warning-label-bg); color: var(--warning-color); border-color: var(--warning-forbidden); }
+.tag-info    { background: var(--brand-label-bg); color: var(--brand-color); border-color: var(--brand-forbidden); }
+.tag-default { background: var(--bg-disabled); color: var(--text-sub); border-color: var(--line-stroke); }
+.tag-danger  { background: var(--error-label-bg); color: var(--error-color); border-color: var(--error-forbidden); }
+.tag-yellow  { background: var(--yellow-label-bg); color: var(--yellow-click); border-color: var(--yellow-forbidden); }
+
+/* 表格内的标签 */
+td .tag { margin: 0; }
+
+/* ═══════════════════════════════════════════════════════
+   [数科标准] 操作列
+   ═══════════════════════════════════════════════════════ */
+.action-links {
+  display: flex; align-items: center; gap: 0;
+  white-space: nowrap;
+}
+.action-links a {
+  color: var(--text-link); font-size: 13px; text-decoration: none;
+  padding: 4px 8px; transition: color var(--duration-fast) var(--ease-smooth);
+  cursor: pointer;
+  /* [Pro Max] min touch target for links */
+  min-height: 28px; display: inline-flex; align-items: center;
+}
+.action-links a:hover { color: var(--brand-hover); text-decoration: underline; }
+.action-links a.danger { color: var(--error-color); }
+.action-links a.danger:hover { color: var(--error-hover); }
+.action-links .sep { color: var(--line-stroke); font-size: 12px; margin: 0 0; }
+.action-links .more-dropdown {
+  position: relative; display: inline-block;
+}
+.action-links .more-dropdown .more-trigger {
+  color: var(--text-link); cursor: pointer; padding: 4px 8px;
+  font-size: 13px;
+}
+.action-links .more-dropdown .more-menu {
+  display: none; position: absolute; top: 100%; right: 0;
+  background: var(--bg-white); border-radius: var(--radius-base);
+  box-shadow: var(--shadow-3); z-index: var(--z-dropdown);
+  min-width: 120px; padding: 4px 0;
+  border: 1px solid var(--line-stroke);
+}
+.action-links .more-dropdown:hover .more-menu { display: block; }
+.action-links .more-dropdown .more-menu a {
+  display: block; padding: 8px 16px; color: var(--text-main);
+  text-decoration: none; font-size: 13px;
+}
+.action-links .more-dropdown .more-menu a:hover { background: var(--bg-container); }
+
+/* ═══════════════════════════════════════════════════════
+   [数科标准] 分页
+   ═══════════════════════════════════════════════════════ */
+.pagination {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 16px 20px; border-top: 1px solid var(--line-stroke);
+}
+.pagination .total { font-size: 13px; color: var(--text-secondary); }
+.pagination .pager { display: flex; align-items: center; gap: 4px; }
+.pagination .page-btn {
+  width: 32px; height: 32px; display: flex;
+  align-items: center; justify-content: center;
+  border: 1px solid var(--line-stroke);
+  border-radius: var(--radius-base);
+  background: var(--bg-white); color: var(--text-main);
+  font-size: 13px; cursor: pointer;
+  transition: all var(--duration-fast) var(--ease-smooth);
+}
+.pagination .page-btn:hover { border-color: var(--brand-color); color: var(--brand-color); }
+.pagination .page-btn.active {
+  background: var(--brand-color); border-color: var(--brand-color);
+  color: var(--text-anti);
+}
+.pagination .page-btn:disabled {
+  opacity: 0.4; cursor: not-allowed; border-color: var(--line-stroke); color: var(--text-disabled);
+}
+.pagination .page-ellipsis {
+  width: 32px; text-align: center; color: var(--text-sub);
+}
+.pagination .page-size {
+  font-size: 13px; color: var(--text-secondary);
+  display: flex; align-items: center; gap: 6px;
+}
+.pagination .page-size select {
+  height: 28px; padding: 0 8px;
+  border: 1px solid var(--line-input-border); border-radius: var(--radius-base);
+  font-size: 13px; font-family: inherit; color: var(--text-main);
+  outline: none;
+}
+
+/* ═══════════════════════════════════════════════════════
+   [数科标准 + Pro Max] 弹窗
+   [hue] 入场动画
+   ═══════════════════════════════════════════════════════ */
+.modal-overlay {
+  position: fixed; inset: 0; background: rgba(0,0,0,0.45);
+  z-index: var(--z-modal);
+  display: none; align-items: center; justify-content: center;
+}
+.modal-overlay.show { display: flex; }
+.modal {
+  background: var(--bg-white); border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-4);
+  min-width: 520px; max-width: 90vw;
+  max-height: 85vh; display: flex; flex-direction: column;
+  /* [Pro Max] 入场动效 */
+  animation: modalIn var(--duration-normal) var(--ease-smooth);
+}
+/* [hue] 弹窗入场动画 — 两层（fade + slideUp） */
+@keyframes modalIn {
+  from { opacity: 0; transform: translateY(-20px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+.modal-header {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 20px 24px 0;
+}
+.modal-header h3 {
+  font-size: 18px; font-weight: 500; color: var(--text-primary);
+  line-height: 26px;
+}
+.modal-header .close-btn {
+  width: 32px; height: 32px; display: flex;
+  align-items: center; justify-content: center;
+  border: none; background: transparent; cursor: pointer;
+  font-size: 20px; color: var(--text-sub); border-radius: var(--radius-base);
+  transition: all var(--duration-fast) var(--ease-smooth);
+}
+.modal-header .close-btn:hover {
+  background: var(--bg-container); color: var(--text-primary);
+}
+.modal-body {
+  padding: 20px 24px; overflow-y: auto; flex: 1;
+}
+.modal-footer {
+  display: flex; align-items: center; justify-content: flex-end; gap: 12px;
+  padding: 16px 24px; border-top: 1px solid var(--line-stroke);
+}
+
+/* ═══════════════════════════════════════════════════════
+   [数科标准] 表单（弹窗内）
+   ═══════════════════════════════════════════════════════ */
+.form-block-title {
+  font-size: 16px; font-weight: 500; color: var(--text-primary);
+  line-height: 24px;
+  padding-left: 12px;
+  border-left: 3px solid var(--brand-color);
+  margin-bottom: 16px;
+}
+.form-item {
+  display: flex; align-items: flex-start; gap: 12px;
+  margin-bottom: 16px;
+}
+.form-item > label {
+  width: 100px; text-align: right; flex-shrink: 0;
+  color: var(--text-main); font-size: 14px;
+  line-height: 32px;
+}
+.form-item > label .required {
+  color: var(--error-color); /* ⚠️ #F84224, 不是 #d9001b */
+  margin-right: 3px;
+}
+.form-item .form-control {
+  flex: 1; max-width: 400px;
+}
+.form-item input, .form-item select, .form-item textarea {
+  width: 100%; height: 32px; padding: 0 12px;
+  border: 1px solid var(--line-input-border);
+  border-radius: var(--radius-base);
+  font-size: 14px; font-family: inherit;
+  color: var(--text-main); background: var(--bg-white);
+  transition: border-color var(--duration-fast) var(--ease-smooth);
+  outline: none;
+}
+.form-item input:focus, .form-item select:focus, .form-item textarea:focus {
+  border-color: var(--brand-color);
+  box-shadow: 0 0 0 2px rgba(0,68,160,0.12);
+}
+.form-item textarea { height: auto; padding: 8px 12px; resize: vertical; min-height: 72px; }
+.form-item .help-text {
+  font-size: 12px; color: var(--text-secondary); margin-top: 4px;
+}
+.form-item .error-text {
+  font-size: 12px; color: var(--error-color); margin-top: 4px;
+  display: none;
+}
+.form-item.has-error input { border-color: var(--error-color); }
+.form-item.has-error .error-text { display: block; }
+
+/* ═══════════════════════════════════════════════════════
+   [Pro Max] Toast 通知
+   ═══════════════════════════════════════════════════════ */
+.toast-container {
+  position: fixed; top: 80px; left: 50%; transform: translateX(-50%);
+  z-index: var(--z-toast);
+  display: none; flex-direction: column; gap: 8px;
+}
+.toast-container.show { display: flex; }
+.toast {
+  padding: 10px 24px; border-radius: var(--radius-base);
+  background: var(--text-primary); color: var(--text-anti);
+  font-size: 14px; box-shadow: var(--shadow-3);
+  animation: toastIn var(--duration-fast) var(--ease-smooth);
+}
+.toast.success { background: var(--success-color); }
+.toast.error { background: var(--error-color); }
+@keyframes toastIn {
+  from { opacity: 0; transform: translateY(-10px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* ═══════════════════════════════════════════════════════
+   [Pro Max + hue] 空状态
+   ═══════════════════════════════════════════════════════ */
+.empty-state {
+  text-align: center; padding: 64px 24px;
+  color: var(--text-sub);
+}
+.empty-state .empty-icon {
+  width: 80px; height: 80px; margin: 0 auto 16px;
+  background: var(--bg-container); border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 36px;
+}
+.empty-state p { font-size: 14px; margin-bottom: 16px; }
+
+/* ═══════════════════════════════════════════════════════
+   [hue] 设计哲学声明
+   ═══════════════════════════════════════════════════════ */
+.philosophy-badge {
+  display: inline-flex; align-items: center; gap: 6px;
+  background: var(--brand-label-bg); color: var(--brand-color);
+  padding: 4px 12px; border-radius: 12px;
+  font-size: 12px; font-weight: 500;
+  border: 1px solid var(--brand-forbidden);
+  margin-bottom: 12px;
+}
+
+/* ═══════════════════════════════════════════════════════
+   响应式
+   ═══════════════════════════════════════════════════════ */
+@media (max-width: 1200px) {
+  .search-row .field { width: 50%; }
+}
+@media (max-width: 992px) {
+  .search-row .field { width: 100%; }
+  .sidebar { display: none; }
+  .main { margin-left: 0; }
+}
+@media (max-width: 768px) {
+  .page-content { padding: 16px; }
+  .pagination { flex-direction: column; gap: 12px; }
+}
+
+/* ═══════════════════════════════════════════════════════
+   [hue 反模式免疫] 动画 - 删除弹出框
+   ═══════════════════════════════════════════════════════ */
+.popconfirm {
+  position: fixed; z-index: var(--z-overlay);
+  background: var(--bg-white); border-radius: var(--radius-base);
+  box-shadow: var(--shadow-3); padding: 16px;
+  min-width: 200px; border: 1px solid var(--line-stroke);
+  animation: popIn var(--duration-fast) var(--ease-smooth);
+  display: none;
+}
+.popconfirm.show { display: block; }
+@keyframes popIn {
+  from { opacity: 0; transform: scale(0.95); }
+  to { opacity: 1; transform: scale(1); }
+}
+.popconfirm p { font-size: 13px; color: var(--text-main); margin-bottom: 12px; }
+.popconfirm .pop-actions { display: flex; justify-content: flex-end; gap: 8px; }
+.popconfirm .pop-actions .btn { height: 28px; padding: 0 12px; font-size: 12px; }
+</style>
+</head>
+<body>
+
+<!-- ═══════════════════════════════════════════════════════
+     [数科标准] 帧布局 — Header
+     ═══════════════════════════════════════════════════════ -->
+<div class="header">
+  <div class="header-logo" role="banner">
+    <div class="logo-icon" aria-hidden="true">数</div>
+    <span class="logo-text">华润数科</span>
+  </div>
+  <nav class="header-nav" role="navigation" aria-label="主导航">
+    <a href="#">首页</a>
+    <a href="#">合同管理</a>
+    <a href="#">外聘律师</a>
+    <a href="#" class="active">仲裁员资源库</a>
+    <a href="#">系统设置</a>
+  </nav>
+  <div class="header-right">
+    <button class="btn-icon" title="消息通知" aria-label="消息通知">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+    </button>
+    <div class="user-info" role="button" tabindex="0" aria-label="用户信息">
+      <div class="avatar" aria-hidden="true">张</div>
+      <span>张明</span>
+      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════
+     [数科标准] 帧布局 — Sidebar
+     ═══════════════════════════════════════════════════════ -->
+<aside class="sidebar" role="navigation" aria-label="侧边导航">
+  <div class="nav-section">
+    <div class="nav-item active">
+      <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>
+      仲裁员资源库
+    </div>
+    <div class="nav-item">
+      <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+      专家分类
+    </div>
+    <div class="nav-item">
+      <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+      评审记录
+    </div>
+    <div class="nav-item">
+      <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+      统计报表
+    </div>
+  </div>
+</aside>
+
+<!-- ═══════════════════════════════════════════════════════
+     [数科标准] 主内容区
+     ═══════════════════════════════════════════════════════ -->
+<div class="main" role="main">
+  <div class="page-content">
+
+    <!-- [数科标准] 面包屑 -->
+    <nav class="breadcrumb" aria-label="面包屑导航">
+      <a href="#">首页</a>
+      <span class="sep">/</span>
+      <span>仲裁员资源库</span>
+    </nav>
+
+    <!-- [hue] 设计哲学小标签 -->
+    <div class="philosophy-badge">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+      数科标准 · 刚柔之道 — 蓝定秩序 · 黄予温度
+    </div>
+
+    <!-- [数科标准] 页面标题 + 操作按钮 -->
+    <div class="page-header">
+      <h1>仲裁员资源库</h1>
+      <div class="header-actions">
+        <button class="btn btn-primary" onclick="openModal('addModal')">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+          新增仲裁员
+        </button>
+      </div>
+    </div>
+
+    <!-- ═══════════════════════════════════════════════════════
+         [数科标准] 搜索面板 — 默认 3 条条件
+         ═══════════════════════════════════════════════════════ -->
+    <div class="search-panel">
+      <div class="search-row">
+        <div class="field">
+          <label>姓名</label>
+          <input type="text" placeholder="请输入仲裁员姓名" aria-label="按姓名搜索">
+        </div>
+        <div class="field">
+          <label>专长领域</label>
+          <select aria-label="按专长领域筛选">
+            <option value="">全部</option>
+            <option>建设工程</option>
+            <option>金融证券</option>
+            <option>知识产权</option>
+            <option>国际贸易</option>
+            <option>公司并购</option>
+            <option>房地产</option>
+          </select>
+        </div>
+        <div class="field">
+          <label>状态</label>
+          <select aria-label="按状态筛选">
+            <option value="">全部</option>
+            <option>启用</option>
+            <option>禁用</option>
+            <option>待审核</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- [数科标准] 高级搜索 — 折叠区域 -->
+      <div id="advancedSearch" class="search-advanced">
+        <div class="search-row">
+          <div class="field">
+            <label>仲裁机构</label>
+            <select aria-label="按仲裁机构筛选">
+              <option value="">全部</option>
+              <option>中国国际经济贸易仲裁委员会</option>
+              <option>北京仲裁委员会</option>
+              <option>上海国际经济贸易仲裁委员会</option>
+              <option>深圳国际仲裁院</option>
+              <option>广州仲裁委员会</option>
+            </select>
+          </div>
+          <div class="field">
+            <label>所在地区</label>
+            <select aria-label="按地区筛选">
+              <option value="">全部</option>
+              <option>北京市</option>
+              <option>上海市</option>
+              <option>广东省</option>
+              <option>江苏省</option>
+              <option>浙江省</option>
+              <option>四川省</option>
+            </select>
+          </div>
+          <div class="field">
+            <label>注册时间</label>
+            <div style="display:flex;gap:8px;flex:1;align-items:center;">
+              <input type="date" aria-label="注册开始日期" style="flex:1;height:32px;padding:0 12px;border:1px solid var(--line-input-border);border-radius:var(--radius-base);font-size:14px;font-family:inherit;">
+              <span style="color:var(--text-sub);">—</span>
+              <input type="date" aria-label="注册结束日期" style="flex:1;height:32px;padding:0 12px;border:1px solid var(--line-input-border);border-radius:var(--radius-base);font-size:14px;font-family:inherit;">
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <hr class="search-divider">
+      <div class="search-actions">
+        <a class="advanced-toggle" href="javascript:void(0)" onclick="toggleAdvanced()" aria-expanded="false" role="button">
+          <span id="advIcon">▼</span> <span id="advText">高级搜索</span>
+        </a>
+        <button class="btn btn-primary">查询</button>
+        <button class="btn">重置</button>
+      </div>
+    </div>
+
+    <!-- ═══════════════════════════════════════════════════════
+         工具栏
+         ═══════════════════════════════════════════════════════ -->
+    <div class="toolbar">
+      <div class="toolbar-left">
+        <button class="btn btn-primary btn-sm" onclick="openModal('addModal')">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+          新增
+        </button>
+        <button class="btn btn-danger btn-sm" onclick="confirmBatchDelete()">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+          批量删除
+        </button>
+        <div class="toolbar-divider"></div>
+        <button class="btn btn-sm">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+          导出
+        </button>
+      </div>
+      <div class="toolbar-right">
+        <button class="btn-icon" title="刷新" aria-label="刷新">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>
+        </button>
+        <button class="btn-icon" title="列设置" aria-label="列设置">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="4" y1="21" x2="4" y2="14"/><line x1="4" y1="10" x2="4" y2="3"/><line x1="12" y1="21" x2="12" y2="12"/><line x1="12" y1="8" x2="12" y2="3"/><line x1="20" y1="21" x2="20" y2="16"/><line x1="20" y1="12" x2="20" y2="3"/><line x1="1" y1="14" x2="7" y2="14"/><line x1="9" y1="8" x2="15" y2="8"/><line x1="17" y1="16" x2="23" y2="16"/></svg>
+        </button>
+      </div>
+    </div>
+
+    <!-- ═══════════════════════════════════════════════════════
+         [数科标准] 表格
+         ═══════════════════════════════════════════════════════ -->
+    <div class="table-wrapper">
+      <table role="table" aria-label="仲裁员列表">
+        <thead>
+          <tr>
+            <th style="width:40px;"><input type="checkbox" class="table-checkbox" id="selectAll" onchange="toggleAll(this)" aria-label="全选"></th>
+            <th>姓名 <span class="sort-icon">▲</span></th>
+            <th>性别</th>
+            <th>仲裁机构 <span class="sort-icon">▼</span></th>
+            <th>专长领域</th>
+            <th>所在地区</th>
+            <th>状态</th>
+            <th>注册日期 <span class="sort-icon">▼</span></th>
+            <th style="width:220px;">操作</th>
+          </tr>
+        </thead>
+        <tbody id="tableBody">
+          <!-- 数据由 JS 动态生成 -->
+        </tbody>
+      </table>
+
+      <!-- [数科标准 + Pro Max] 空状态（隐藏，无数据时显示） -->
+      <div id="emptyState" class="empty-state" style="display:none;">
+        <div class="empty-icon">📋</div>
+        <p>暂未找到匹配的仲裁员记录</p>
+        <button class="btn btn-primary btn-sm" onclick="resetSearch()">重置搜索条件</button>
+      </div>
+
+      <!-- [数科标准] 分页 -->
+      <div class="pagination">
+        <span class="total">共 <strong id="totalCount">0</strong> 条</span>
+        <div class="pager" id="pager">
+          <button class="page-btn" id="prevBtn" onclick="goPage(currentPage-1)" disabled aria-label="上一页">‹</button>
+          <div id="pageNumbers" style="display:flex;gap:4px;"></div>
+          <button class="page-btn" id="nextBtn" onclick="goPage(currentPage+1)" aria-label="下一页">›</button>
+        </div>
+        <div class="page-size">
+          每页 <select onchange="changePageSize(this.value)" aria-label="每页条数">
+            <option value="10">10 条</option>
+            <option value="20">20 条</option>
+            <option value="50">50 条</option>
+            <option value="100">100 条</option>
+          </select> /页
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════
+     [数科标准 + Pro Max] 弹窗 — 新增仲裁员
+     ═══════════════════════════════════════════════════════ -->
+<div class="modal-overlay" id="addModal" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
+  <div class="modal">
+    <div class="modal-header">
+      <h3 id="modalTitle">新增仲裁员</h3>
+      <button class="close-btn" onclick="closeModal('addModal')" aria-label="关闭">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-block-title">基本信息</div>
+      <div class="form-item">
+        <label><span class="required">*</span>姓名</label>
+        <div class="form-control">
+          <input type="text" placeholder="请输入仲裁员姓名" aria-required="true">
+          <div class="help-text">2-20 个字符</div>
+        </div>
+      </div>
+      <div class="form-item">
+        <label>性别</label>
+        <div class="form-control">
+          <select>
+            <option>男</option>
+            <option>女</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-item">
+        <label>出生年份</label>
+        <div class="form-control">
+          <input type="text" placeholder="例如 1975">
+        </div>
+      </div>
+      <div class="form-item">
+        <label><span class="required">*</span>所属机构</label>
+        <div class="form-control">
+          <select aria-required="true">
+            <option value="">请选择仲裁机构</option>
+            <option>中国国际经济贸易仲裁委员会</option>
+            <option>北京仲裁委员会</option>
+            <option>上海国际经济贸易仲裁委员会</option>
+            <option>深圳国际仲裁院</option>
+            <option>广州仲裁委员会</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="form-block-title" style="margin-top:24px;">专业信息</div>
+      <div class="form-item">
+        <label><span class="required">*</span>专长领域</label>
+        <div class="form-control">
+          <select aria-required="true">
+            <option value="">请选择专长领域</option>
+            <option>建设工程</option>
+            <option>金融证券</option>
+            <option>知识产权</option>
+            <option>国际贸易</option>
+            <option>公司并购</option>
+            <option>房地产</option>
+            <option>海事海商</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-item">
+        <label>执业年限</label>
+        <div class="form-control">
+          <input type="text" placeholder="例如 15 年">
+        </div>
+      </div>
+      <div class="form-item">
+        <label>个人简介</label>
+        <div class="form-control">
+          <textarea placeholder="请输入仲裁员个人简介（限 500 字）"></textarea>
+        </div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn" onclick="closeModal('addModal')">取消</button>
+      <button class="btn btn-primary" onclick="closeModal('addModal');showToast('新增仲裁员成功','success')">确定</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════
+     [Pro Max] Toast 容器
+     ═══════════════════════════════════════════════════════ -->
+<div class="toast-container" id="toastContainer"></div>
+
+<!-- ═══════════════════════════════════════════════════════
+     [hue 反模式] Popconfirm — 删除确认
+     ═══════════════════════════════════════════════════════ -->
+<div class="popconfirm" id="deleteConfirm">
+  <p>删除后将无法恢复，确定删除该记录吗？</p>
+  <div class="pop-actions">
+    <button class="btn" onclick="hideDeleteConfirm()">取消</button>
+    <button class="btn btn-danger" onclick="confirmDelete()">确定删除</button>
+  </div>
+</div>
+
+<script>
+// ═══════════════════════════════════════════════════════════════
+// [数科标准 + Pro Max + hue] 三体融合交互逻辑
+// ═══════════════════════════════════════════════════════════════
+
+// === Mock 数据 ===
+const mockData = [
+  { name: '王建国', gender: '男', org: '中国国际经济贸易仲裁委员会', field: '建设工程', region: '北京市', status: '启用', date: '2024-03-15' },
+  { name: '李芳华', gender: '女', org: '北京仲裁委员会', field: '金融证券', region: '上海市', status: '启用', date: '2024-02-20' },
+  { name: '张明德', gender: '男', org: '上海国际经济贸易仲裁委员会', field: '知识产权', region: '上海市', status: '启用', date: '2024-01-10' },
+  { name: '陈思远', gender: '男', org: '深圳国际仲裁院', field: '国际贸易', region: '广东省', status: '待审核', date: '2024-04-01' },
+  { name: '赵晓梅', gender: '女', org: '中国国际经济贸易仲裁委员会', field: '公司并购', region: '北京市', status: '启用', date: '2023-11-05' },
+  { name: '刘伟强', gender: '男', org: '广州仲裁委员会', field: '房地产', region: '广东省', status: '禁用', date: '2023-09-18' },
+  { name: '孙丽华', gender: '女', org: '北京仲裁委员会', field: '金融证券', region: '北京市', status: '启用', date: '2024-05-22' },
+  { name: '周志文', gender: '男', org: '深圳国际仲裁院', field: '建设工程', region: '广东省', status: '待审核', date: '2024-06-03' },
+  { name: '吴玉琴', gender: '女', org: '上海国际经济贸易仲裁委员会', field: '知识产权', region: '浙江省', status: '启用', date: '2023-12-12' },
+  { name: '郑鸿飞', gender: '男', org: '中国国际经济贸易仲裁委员会', field: '国际贸易', region: '上海市', status: '启用', date: '2024-03-28' },
+  { name: '林秀芝', gender: '女', org: '北京仲裁委员会', field: '公司并购', region: '江苏省', status: '启用', date: '2024-04-15' },
+  { name: '黄志华', gender: '男', org: '广州仲裁委员会', field: '房地产', region: '广东省', status: '禁用', date: '2024-01-22' },
+  { name: '杨晓峰', gender: '男', org: '中国国际经济贸易仲裁委员会', field: '建设工程', region: '四川省', status: '待审核', date: '2024-06-10' },
+  { name: '马晓燕', gender: '女', org: '深圳国际仲裁院', field: '金融证券', region: '上海市', status: '启用', date: '2023-10-08' },
+];
+
+let currentPage = 1;
+let pageSize = 10;
+let deleteTarget = null;
+
+function getStatusTag(status) {
+  const map = {
+    '启用': 'success',
+    '禁用': 'default',
+    '待审核': 'info'
+  };
+  const cls = map[status] || 'default';
+  return `<span class="tag tag-${cls}">${status}</span>`;
+}
+
+function renderTable() {
+  const start = (currentPage - 1) * pageSize;
+  const end = Math.min(start + pageSize, mockData.length);
+  const pageData = mockData.slice(start, end);
+  const tbody = document.getElementById('tableBody');
+  const totalSpan = document.getElementById('totalCount');
+  const emptyState = document.getElementById('emptyState');
+
+  totalSpan.textContent = mockData.length;
+
+  if (pageData.length === 0) {
+    tbody.innerHTML = '';
+    emptyState.style.display = 'block';
+    return;
+  }
+  emptyState.style.display = 'none';
+
+  tbody.innerHTML = pageData.map((item, i) => {
+    const actions = [
+      { label: '编辑', cls: '' },
+      { label: '详情', cls: '' },
+      { label: '删除', cls: 'danger', action: `deleteItem(${start + i})` },
+    ];
+
+    let actionHtml = '';
+    if (actions.length <= 4) {
+      actionHtml = actions.map((a, idx) => {
+        const sep = idx > 0 ? '<span class="sep">|</span>' : '';
+        if (a.action) {
+          return `${sep}<a class="${a.cls}" href="javascript:void(0)" onclick="${a.action}">${a.label}</a>`;
+        }
+        return `${sep}<a class="${a.cls}" href="javascript:void(0)">${a.label}</a>`;
+      }).join('');
+    }
+
+    return `<tr>
+      <td><input type="checkbox" class="table-checkbox" aria-label="选择 ${item.name}"></td>
+      <td><strong style="color:var(--text-primary);font-weight:500;">${item.name}</strong></td>
+      <td>${item.gender}</td>
+      <td>${item.org}</td>
+      <td><span class="tag tag-info">${item.field}</span></td>
+      <td>${item.region}</td>
+      <td>${getStatusTag(item.status)}</td>
+      <td style="color:var(--text-secondary);font-size:13px;">${item.date}</td>
+      <td><div class="action-links">${actionHtml}</div></td>
+    </tr>`;
+  }).join('');
+
+  renderPagination();
+}
+
+function renderPagination() {
+  const totalPages = Math.ceil(mockData.length / pageSize);
+  const pageNumbers = document.getElementById('pageNumbers');
+  const prevBtn = document.getElementById('prevBtn');
+  const nextBtn = document.getElementById('nextBtn');
+
+  prevBtn.disabled = currentPage <= 1;
+  nextBtn.disabled = currentPage >= totalPages;
+
+  let pages = [];
+  const range = 2;
+  for (let i = 1; i <= totalPages; i++) {
+    if (i === 1 || i === totalPages || (i >= currentPage - range && i <= currentPage + range)) {
+      pages.push(i);
+    } else if (pages[pages.length - 1] !== '...') {
+      pages.push('...');
+    }
+  }
+
+  pageNumbers.innerHTML = pages.map(p => {
+    if (p === '...') return '<span class="page-ellipsis">…</span>';
+    return `<button class="page-btn${p === currentPage ? ' active' : ''}" onclick="goPage(${p})">${p}</button>`;
+  }).join('');
+}
+
+function goPage(p) {
+  const totalPages = Math.ceil(mockData.length / pageSize);
+  if (p < 1 || p > totalPages) return;
+  currentPage = p;
+  renderTable();
+}
+
+function changePageSize(size) {
+  pageSize = parseInt(size);
+  currentPage = 1;
+  renderTable();
+}
+
+// === [hue 反模式] 删除 — 必须有 Popconfirm ===
+function deleteItem(index) {
+  deleteTarget = index;
+  const btn = event.target;
+  const rect = btn.getBoundingClientRect();
+  const pop = document.getElementById('deleteConfirm');
+  pop.style.top = (rect.top - 60) + 'px';
+  pop.style.left = (rect.left - 80) + 'px';
+  pop.classList.add('show');
+}
+
+function hideDeleteConfirm() {
+  document.getElementById('deleteConfirm').classList.remove('show');
+  deleteTarget = null;
+}
+
+function confirmDelete() {
+  if (deleteTarget !== null) {
+    mockData.splice(deleteTarget, 1);
+    if (currentPage > Math.ceil(mockData.length / pageSize)) {
+      currentPage = Math.max(1, Math.ceil(mockData.length / pageSize));
+    }
+    renderTable();
+    showToast('删除成功', 'success');
+  }
+  hideDeleteConfirm();
+}
+
+// === 批量删除 ===
+function confirmBatchDelete() {
+  const checked = document.querySelectorAll('#tableBody .table-checkbox:checked');
+  if (checked.length === 0) {
+    showToast('请先选择要删除的记录', 'warning');
+    return;
+  }
+  if (confirm('确定删除选中的 ' + checked.length + ' 条记录吗？')) {
+    showToast('批量删除成功', 'success');
+  }
+}
+
+// === 全选 ===
+function toggleAll(el) {
+  document.querySelectorAll('#tableBody .table-checkbox').forEach(cb => cb.checked = el.checked);
+}
+
+// === [数科标准] 高级搜索折叠 ===
+function toggleAdvanced() {
+  const panel = document.getElementById('advancedSearch');
+  const icon = document.getElementById('advIcon');
+  const text = document.getElementById('advText');
+  const isOpen = panel.classList.toggle('show');
+  icon.textContent = isOpen ? '▲' : '▼';
+  text.textContent = isOpen ? '收起搜索' : '高级搜索';
+}
+
+// === 弹窗 ===
+function openModal(id) {
+  document.getElementById(id).classList.add('show');
+  document.body.style.overflow = 'hidden';
+  // [Pro Max] 焦点管理
+  setTimeout(() => {
+    const firstInput = document.querySelector('#' + id + ' input, #' + id + ' select');
+    if (firstInput) firstInput.focus();
+  }, 100);
+}
+
+function closeModal(id) {
+  document.getElementById(id).classList.remove('show');
+  document.body.style.overflow = '';
+}
+
+// 点击遮罩关闭弹窗
+document.querySelectorAll('.modal-overlay').forEach(el => {
+  el.addEventListener('click', function(e) {
+    if (e.target === this) {
+      this.classList.remove('show');
+      document.body.style.overflow = '';
+    }
+  });
+});
+
+// [Pro Max] Esc 键关闭弹窗
+document.addEventListener('keydown', function(e) {
+  if (e.key === 'Escape') {
+    document.querySelectorAll('.modal-overlay.show').forEach(m => {
+      m.classList.remove('show');
+      document.body.style.overflow = '';
+    });
+  }
+});
+
+// === [Pro Max] Toast ===
+function showToast(msg, type) {
+  const container = document.getElementById('toastContainer');
+  const toast = document.createElement('div');
+  toast.className = 'toast' + (type ? ' ' + type : '');
+  toast.textContent = msg;
+  container.classList.add('show');
+  container.appendChild(toast);
+  setTimeout(() => {
+    toast.style.opacity = '0';
+    toast.style.transition = 'opacity 300ms';
+    setTimeout(() => {
+      toast.remove();
+      if (container.children.length === 0) container.classList.remove('show');
+    }, 300);
+  }, 3000);
+}
+
+// === 重置 ===
+function resetSearch() {
+  document.querySelectorAll('.search-panel input, .search-panel select').forEach(el => el.value = '');
+  currentPage = 1;
+  renderTable();
+  showToast('搜索条件已重置', 'success');
+}
+
+// === 初始化 ===
+renderTable();
+</script>
+</body>
+</html>
