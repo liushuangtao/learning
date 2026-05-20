@@ -1,0 +1,424 @@
+================================================================================
+                    碳系统填报数据流分析
+================================================================================
+
+整个系统围绕 填报 → 审批 → 计算 → 融合 → 汇总 → 向上汇总 → 推送 的流水线设计。
+
+核心分为两大计算阶段：
+  阶段一（审批回调触发）：单组织内计算 — 填报数据 → 指标计算 → 融合表 → 行业模板 → 汇总模板
+  阶段二（手动/定时触发）：跨组织向上汇总 — 下级组织数据 → 按层级逐级向上聚合 → 集团级汇总
+
+================================================================================
+一、表关系总览
+================================================================================
+
+                         阶段一：单组织计算（审批回调触发）
+                         ════════════════════════════════
+
+                  用户填报
+                     │
+    ┌────────────────┼────────────────┐
+    ▼                ▼                ▼
+cis_reporting     cis_reporting    cis_reporting
+_org              _org_filling     _org_index_data
+(主表)            (机组/生产线级)    (合计/计算值)
+    │                │                │
+    └────────────────┴────────────────┘
+                     │
+              [审批通过回调]
+                     │
+    ┌────────────────┼────────────────┐
+    ▼                ▼                ▼
+cis_reporting     cis_report       cis_report
+_org_filling      _data            _template
+_history          (融合表)         (行业模板)
+(历史快照)            │                │
+                     │                │
+                     └──────┬─────────┘
+                            │
+                     [跨模板汇总]
+                     calReportOrg()
+                            │
+                            ▼
+                      cis_report
+                      _org
+                      (汇总模板)
+
+
+                         阶段二：跨组织向上汇总（手动/定时触发）
+                         ════════════════════════════════
+
+              POST /v1/summary/org/calcuate
+                     │
+          ┌──────────┼──────────┐
+          ▼          ▼          ▼
+      填报单位    中间汇总单位   顶级汇总单位
+    (重新融合)  (线程池并发)   (华润集团)
+          │          │          │
+          │   读下级 cis_report_data    读下级 cis_report_template
+          │   按模板+核算边界+指标汇总   按模板+核算边界+指标汇总
+          │          │          │
+          ▼          ▼          ▼
+      cis_report  cis_report  cis_report
+      _data       _template   _template
+      _template      │          │
+      _org      [跨模板汇总]  [跨模板汇总]
+                     │          │
+                     ▼          ▼
+               cis_report  cis_report
+               _org        _org
+                     │          │
+                     └────┬─────┘
+                          │
+                    [EHS推送]
+                    syncPushReportToEhs()
+                          │
+                    读取 cis_report_data
+                    读取 cis_reporting_org_index_data
+                          │
+                          ▼
+                    EHS (SSDPRequest)
+
+================================================================================
+二、各表详细说明
+================================================================================
+
+【0. cis_reporting_org — 填报主表】
+每个组织+模板+填报周期一条记录。记录填报状态流转：DRAFT → APPROVALING → APPROVALED。
+● 创建：ReportingStartNoticeJob 定时任务在填报周期开启时，为所有填报单位创建记录
+● 保存：用户打开填报页面时 saveFillInfo() 更新
+● 提交：工作流提交回调 submit() → 状态变为 APPROVALING
+● 审批通过：approvaled() 回调 → 状态变为 APPROVALED，这是整个下游数据流的触发点
+● 驳回：reset() 回调 → 状态回退 DRAFT，数据从历史表恢复
+● 冻结：ReportingFrozenJob 定时任务在截止日后设置 is_frozen=YES
+
+【1. cis_reporting_org_filling — 填报指标数据（机组/生产线明细）】
+记录每个机组或生产线对每个指标的原始填报值。
+● 电力行业：enterprise_type=UNIT，每个机组一条
+● 建材行业：enterprise_type=PRODUCT_LINE，每条生产线一条
+● 用户保存填报数据时写入，指标计算后也会写回计算值
+
+【2. cis_reporting_org_filling_history — 历史快照】
+结构与 cis_reporting_org_filling 相同，额外包含排放源、指标说明、单位、排序等字段。
+● 审批通过时：_filling 数据全量拷贝到此表，然后清空 _filling
+● 驳回时：从此表恢复到 _filling，然后清空此表
+● 加权平均计算时：查询历史表获取前几个月的累计值
+
+【3. cis_reporting_org_index_data — 指标计算数据（合计/汇总）】
+记录核算边界级别的计算结果（而非机组明细）。核心字段：
+● report_period_value：报告期值
+● annual_cumulative_value：年度累计值
+● year_cumulative_value：同比累计值
+● warnning_reason：预警原因
+
+计算逻辑（CisReportingOrgIndexDataBizImpl.calReportingIndexValue()）：
+● 设施层级：先将公式按机组/生产线分解计算各机组值，再跨机组求和汇总，再计算年度累计和同比
+● 企业层级：汇总设施层数据，套用公式，计算可比价
+
+【4. cis_report_data — 融合表（中枢表）】
+审批通过时，由 CisReportDataBizImpl.calcuteReportValue() 生成，将 _index_data 的计算值与基值、去年同期值合并，计算环比/同比百分比：
+● 从 cis_reporting_org_index_data 读取当期值
+● 从 cis_base_value_index_maintenance 读取基值
+● 从上一周期、去年同期的 _index_data 读取对比值
+● 计算 base_value_percent、report_period_percent、year_comulative_percent
+
+这个表是数据中枢，同时驱动两个下游：
+1. EHS推送：EHSTemplateReportInfoBizImpl.syncPushReportToEhs() 从此表读取数据推送
+2. 汇总聚合：垂直汇总从此表聚合到 cis_report_org
+
+【5. cis_report_org — 汇总模板数据（纵向汇总）】
+由 NoTopOrgCorssTemplate.calReportOrgList() 生成，跨组织汇总：
+● 根据汇总模板的 template_code_set 找到所有子组织的行业模板
+● 按公式分解，将各子组织的指标值纵向求和
+● 写入汇总模板对应的 org_id + template_code_set 记录
+
+【6. cis_report_template — 行业模板数据】
+与 cis_report_data 数据完全相同（BeanUtils.copy 直接拷贝），只是按 template_code 维度组织。作为汇总计算的中间数据源，也在 Excel 导出时使用。
+
+================================================================================
+三、审批回调触发的完整流程
+================================================================================
+
+CisReportingOrgFeignBizImpl.approvaled() 是整个数据流的核心触发点。
+审批通过后异步执行以下步骤：
+
+1. cis_reporting_org_filling → cis_reporting_org_filling_history (数据快照)
+   同时清空 cis_reporting_org_filling
+
+2. CisReportDataBizImpl.calcuteReportValue():
+   a. 读取 cis_reporting_org_index_data + 基值 + 去年同期值
+      → 计算环比/同比百分比
+      → 写入 cis_report_data
+   b. BeanUtils.copy
+      → 写入 cis_report_template (与 _data 完全相同)
+   c. calReportOrg() → NoTopOrgCorssTemplate
+      → 跨组织纵向汇总
+      → 写入 cis_report_org
+
+3. EHSTemplateReportInfoBizImpl.syncPushReportToEhs():
+   a. 检查模板是否配置了 ehs_template_code
+   b. 匹配 EHS 指标映射(cis_ehs_template_report_info)
+   c. 从 cis_report_data 读取指标值
+   d. 从 cis_reporting_org_index_data 读取预警原因
+   e. 构建 JSON 参数字符串推送到 EHS (SSDPRequestFeignClient)
+      - 指标编码20548的值除以10000再推送
+      - 指标编码20732(可再生能源用电量)的值乘以10000再推送
+      - 其他特殊指标按映射规则处理
+   f. 记录推送日志到 cis_ehs_template_report_log
+
+驳回时（reset() 回调），流程相反：
+● 从 cis_reporting_org_filling_history 恢复到 cis_reporting_org_filling
+● 删除 cis_report_data 中该组织当前周期的数据
+● 删除 cis_report_template 中该组织当前周期的数据
+● 删除 cis_report_org 中该组织当前周期的数据
+● 重新生成该组织的 cis_report_org
+
+================================================================================
+四、向上汇总计算 — POST /v1/summary/org/calcuate
+================================================================================
+
+这是第二阶段的核心方法，用于将下级组织已计算完成的数据向上逐级聚合到集团总部。
+入口：CisSummaryOrgCalcuateController.calcuate() → CisSummaryOrgCalcuateBizImpl.calcuate()
+
+【触发方式】
+● 手动触发：用户在"数据计算汇总"页面选择一个组织和报告期，点击"数据计算"按钮
+● 定时触发：OrgVerticalCalcuateJob.verticalSummaryOrgCalcuate() 定时任务
+
+【请求参数】CisSummaryOrgCalcuateVo
+  reportPeriod  -- 报告期（如 2026-05），必填
+  orgId         -- 要汇总的目标组织ID，必填
+  orgCname      -- 组织名称（用于日志提示）
+  adminFlag     -- 管理员标记（管理员可计算往年数据，普通用户只能计算本月/上月）
+
+【前置校验】
+  1. 非管理员不能对往年月份触发计算（报错："往年月份的数据不允许触发计算"）
+  2. 同一组织同一报告期已有 CALCULATING 状态的计算时，拒绝重复提交（报错："正在计算中，请重试"）
+
+【三路分发逻辑】
+
+根据组织的 isReport 属性（填报单位/汇总单位）以及是否为顶级汇总单位，分三种路径：
+
+┌─────────────────────────────────────────────────────────────────────────┐
+│ 路径A：填报单位 (isReport = FILL_ORGANIZATION)                           │
+│   → OrgVerticalSummaryOrgCalService.fillOrgCalcuate()                   │
+│   对填报单位的每条 cis_reporting_org 记录，重新调用                       │
+│   reportDataBiz.calcuteReportValue(reportingOrg)，重新执行：             │
+│     cis_reporting_org_index_data → cis_report_data → cis_report_template │
+│     → cis_report_org                                                    │
+│   本质上是"重新融合计算"，适用于填报数据修正后需要重新生成的场景           │
+└─────────────────────────────────────────────────────────────────────────┘
+
+┌─────────────────────────────────────────────────────────────────────────┐
+│ 路径B：顶级汇总单位 (华润集团根节点)                                      │
+│   → OrgVerticalSummaryOrgCalService.topOrgCalcuate()                    │
+│   1. 保存/更新计算日志 (status=CALCULATING)                              │
+│   2. IndustrySummaryTopOrgThreadThread.calcuate():                       │
+│      a. 查询直属下级组织中 isJoinSummary=YES 的单位                       │
+│      b. 读取所有下级单位的 cis_report_template 数据（必须已计算完成）     │
+│      c. 按 模板 → 核算边界 → 指标(fuelCode_indexCode) 分组               │
+│      d. 每组的报告期值 = 各下级单位报告期值求和                            │
+│      e. 计算年累值 (本月报告期值 + 上月年累值 或 加权平均等)              │
+│      f. 计算环比/同比百分比，查基期值                                     │
+│      g. 写入 cis_report_template（以顶级组织ID为orgId）                   │
+│      h. TopOrgCorssTemplate.calReportOrgList() → 跨模板汇总             │
+│         → 写入 cis_report_org                                            │
+│   3. 更新日志状态 SUCCESS / FAILED                                        │
+└─────────────────────────────────────────────────────────────────────────┘
+
+┌─────────────────────────────────────────────────────────────────────────┐
+│ 路径C：非顶级汇总单位 (中间层级，如大区/事业部)                            │
+│   → OrgVerticalSummaryOrgCalService.noTopOrgCalcuate()                  │
+│   1. 获取该单位下所有子汇总单位 + 所有上级汇总单位                          │
+│   2. 排除华润集团根节点（根节点由路径B单独处理）                            │
+│   3. 为每个汇总单位保存计算日志 (status=CALCULATING)                      │
+│   4. 提交到线程池 ThreadPoolConfig.summaryThreadPoolExecutor 并发执行：  │
+│      IndustrySummaryThreadThread (每个汇总单位一个线程):                  │
+│        a. 查询该汇总单位下所有填报单位的 cis_report_data                   │
+│        b. 按 模板 → 核算边界 → 指标 分组，求和                             │
+│        c. 公式类指标通过 FormulaCalWayHandler 计算                        │
+│        d. 计算年累值（4种方式：累加/算术平均/加权平均/默认）               │
+│        e. 计算环比/同比百分比，查基期值                                    │
+│        f. 写入 cis_report_template (以汇总单位ID为orgId)                  │
+│        g. NoTopOrgCorssTemplate.calReportOrgList() → 跨模板汇总         │
+│           → 匹配汇总模板(template_code_set)                               │
+│           → 按汇总模板指标公式聚合                                         │
+│           → 写入 cis_report_org                                           │
+│   5. 各线程独立更新日志状态 SUCCESS / FAILED                               │
+└─────────────────────────────────────────────────────────────────────────┘
+
+【年累值计算方式】（AnnualCumulativeCalWayEnum）
+  TOTAL_VALUE      — 累加：本月报告期值 + 上月年累值
+  ARITHMETIC_MEAN  — 算术平均：本年月度报告期值之和 / 已填报月数
+  WEIGHTED_AVERAGE — 加权平均：(Σ 各月报告期值×各月权重值) / 权重年累值
+  DEFAULT_VALUE    — 直接取报告期值
+
+【跨模板汇总 (CrossTemplateAbstract.buildReportOrgList)】
+  行业模板的指标值按"汇总模板"的配置重新聚合：
+  1. 根据行业模板编码找到对应的汇总模板 (cis_summary_template)
+  2. 获取汇总模板的指标映射 (summaryTemplateIndexMap)
+  3. 对每个指标：
+     - 累加汇总 (ACCUMULATED)：同一指标跨行业模板求和
+     - 公式汇总 (FORMULA)：通过公式引擎 FormulaCalWayHandler 计算
+     - 无需汇总 (NO_NEED)：直接取 null
+  4. 计算年累值、环比、同比
+  5. 写入 cis_report_org (orgId=汇总单位, templateCodeSet=汇总模板编码集)
+
+【与审批回调中 calcuteReportValue() 的区别】
+
+  calcuteReportValue() (审批回调)        calcuate() (本方法)
+  ─────────────────────────────         ──────────────────
+  作用于单个填报单位                     作用于汇总单位（或重新计算填报单位）
+  数据源：_index_data + 基值 + 去年同期   数据源：下级单位的 _data / _template
+  输出：_data(融合) + _template(行业模板) 输出：_template(汇总单位) + _org(汇总模板)
+  触发：审批通过自动触发                  触发：手动操作或定时任务
+  计算方向：横向（单组织内多表融合）       计算方向：纵向（跨组织向上聚合）
+
+【关键数据表流转】
+
+  下级填报单位 (已审批通过)
+  ├── cis_report_data          ← 读取，按指标求和
+  └── cis_report_template      ← 读取(B路径)，按指标求和
+           │
+           ▼
+  汇总单位 (本次计算输出)
+  ├── cis_report_template      ← 写入 (orgId=汇总单位ID)
+  └── cis_report_org           ← 写入 (templateCodeSet=汇总模板编码)
+           │
+           ▼
+  更上级汇总单位 (如果存在)
+  └── 继续向上递归聚合 ...
+
+【日志与监控】
+
+  计算过程日志表：
+  ● cis_report_summary_org_log       — 汇总计算主日志 (orgId + reportPeriod + calcuateStatus)
+     状态流转：CALCULATING → CALCULATE_SUCCESS / CALCULATE_FAILED
+  ● cis_report_summary_proecss_log  — 计算过程错误明细 (logId + calcuateParam + errorMsg)
+
+  前端通过 /v1/summary/org/calcuate/list 每5秒轮询查看计算进度和结果
+
+================================================================================
+五、定时任务
+================================================================================
+
+填报启动    ReportingStartNoticeJob   周期开启时创建 cis_reporting_org 记录
+填报冻结    ReportingFrozenJob        截止日后设置 is_frozen=YES 冻结填报
+向上汇总    OrgVerticalCalcuateJob    定时触发跨组织向上汇总计算
+EHS批量推送 EhsTemplateInfoJob        每月1-7号按模板批量推送数据给EHS
+EHS重试推送 EhsTemplateInfoReimburseJob 每小时重试推送失败的数据(最多10次)
+填报通知    ReportingStartNoticeJob   填报启动/截止时发送通知消息
+
+================================================================================
+六、核心类索引
+================================================================================
+
+【实体类 (dao层)】
+cis-carbon-dao/.../reporting/dao/entity/
+  CisReportingOrgEntity.java             -- 填报主表
+  CisReportingOrgFillingEntity.java      -- 填报指标数据(机组/生产线级)
+  CisReportingOrgFillingHistoryEntity.java -- 填报历史快照
+  CisReportingOrgIndexDataEntity.java    -- 指标计算数据(合计)
+
+cis-carbon-dao/.../report/dao/entity/
+  CisReportDataEntity.java               -- 融合表(中枢)
+  CisReportOrgEntity.java                -- 汇总模板数据
+  CisReportTemplateEntity.java           -- 行业模板数据
+
+cis-carbon-dao/.../calcuate/dao/entity/
+  CisReportSummaryOrgLogEntity.java      -- 向上汇总计算日志
+  CisReportSummaryProecssLogEntity.java  -- 向上汇总计算过程错误日志
+
+【业务逻辑 (biz层) — 阶段一：单组织计算】
+cis-carbon-biz/.../reporting/biz/impl/
+  CisReportingOrgBizImpl.java            -- 填报主页保存/查询逻辑
+  CisReportingOrgFillingBizImpl.java     -- 填报指标数据CRUD
+  CisReportingOrgFillingHistoryBizImpl.java -- 历史快照复制/恢复
+  CisReportingOrgIndexDataBizImpl.java   -- 指标计算引擎(核心算法)
+  CisReportingOrgFeignBizImpl.java       -- 工作流回调(提交/审批通过/驳回)
+
+cis-carbon-biz/.../report/biz/impl/
+  CisReportDataBizImpl.java              -- 融合表写入/删除(calcuteReportValue)
+  CisReportOrgBizImpl.java               -- 汇总模板查询/导出
+  CisReportTemplateBizImpl.java          -- 行业模板查询/导出
+
+【业务逻辑 (biz层) — 阶段二：向上汇总计算】
+cis-carbon-biz/.../calcuate/biz/impl/
+  CisSummaryOrgCalcuateBizImpl.java      -- 向上汇总入口(校验+分发)
+
+cis-carbon-biz/.../calcuate/service/impl/
+  OrgVerticalSummaryOrgCalServiceImpl.java -- 三路分发实现(fillOrg/topOrg/noTopOrg)
+
+cis-carbon-biz/.../calcuate/summary/
+  VerticalSummaryBaseThread.java         -- 汇总计算基类(公式数据查询、公共方法)
+  IndustrySummaryThreadThread.java       -- 非顶级汇总单位计算线程(Runnable)
+  IndustrySummaryTopOrgThreadThread.java -- 顶级汇总单位(华润集团)计算
+  IndustryTemplateCalCommonHandler.java  -- 报告期值/年累值计算公共处理器
+
+cis-carbon-biz/.../calcuate/summary/crosstemplate/
+  CrossTemplateAbstract.java             -- 跨模板汇总抽象基类(年累值/加权平均/公式计算)
+  NoTopOrgCorssTemplate.java             -- 非顶级组织跨模板汇总
+  TopOrgCorssTemplate.java               -- 顶级组织跨模板汇总
+
+cis-carbon-biz/.../external/ehs/biz/impl/
+  EHSTemplateReportInfoBizImpl.java       -- EHS推送逻辑(syncPushReportToEhs)
+
+【定时任务】
+cis-carbon-biz/.../task/reporting/
+  ReportingStartNoticeJob.java            -- 填报启动通知
+  ReportingFrozenJob.java                 -- 填报冻结
+
+cis-carbon-biz/.../task/calcuate/
+  OrgVerticalCalcuateJob.java             -- 定时触发向上汇总计算
+
+cis-carbon-biz/.../task/ehstemplate/
+  EhsTemplateInfoJob.java                 -- EHS批量推送
+  EhsTemplateInfoReimburseJob.java        -- EHS推送重试
+
+【EHS推送SQL映射】
+cis-carbon-dao/src/main/resources/mapper/external/
+  EHSTemplateReportInfoMapper.xml         -- findDataByconditions(读cis_report_data)
+                                            findReportingIndexDataList(读_index_data)
+
+================================================================================
+七、数据流向时序图
+================================================================================
+
+  定时任务              用户操作              工作流              阶段一:审批回调      阶段二:向上汇总      EHS推送
+     │                    │                    │                    │                 │                 │
+     ├─创建填报记录────────→│                    │                    │                 │                 │
+     │                    ├─填写指标值──────────→│                    │                 │                 │
+     │                    │  (_filling)         │                    │                 │                 │
+     │                    ├─保存/核查───────────→│                    │                 │                 │
+     │                    │  (_index_data计算)  │                    │                 │                 │
+     │                    ├─提交────────────────→│                    │                 │                 │
+     │                    │                    ├─审批通过───────────→│                 │                 │
+     │                    │                    │                    ├─快照_filling    │                 │
+     │                    │                    │                    │  →_history      │                 │
+     │                    │                    │                    ├─计算融合        │                 │
+     │                    │                    │                    │  →_data         │                 │
+     │                    │                    │                    │  →_template     │                 │
+     │                    │                    │                    ├─跨模板汇总      │                 │
+     │                    │                    │                    │  →_org          │                 │
+     │                    │                    │                    ├────────────────────────────────→│
+     │                    │                    │                    │                 │             ├─读_data
+     │                    │                    │                    │                 │             ├─读_index_data
+     │                    │                    │                    │                 │             ├─构建JSON
+     │                    │                    │                    │                 │             └─推送EHS
+     │                    │                    ├─驳回───────────────→│                 │
+     │                    │                    │                    ├─history→filling │
+     │                    │                    │                    ├─删除_data       │
+     │                    │                    │                    │  /_template/_org│
+     │                    │                    │                    └─重生成_org      │
+     ├─冻结填报───────────→│                    │                    │                 │
+     │                    │                    │                    │                 │
+     │                    │  用户点击"数据计算"  │                    │                 │
+     │                    ├─POST /summary/org  │                    │                 │
+     │                    │  /calcuate ─────────────────────────────────────────────→│
+     │                    │                    │                    │                 ├─读下级_data
+     │                    │                    │                    │                 ├─按模板/指标求和
+     │                    │                    │                    │                 ├─计算年累/环比/同比
+     │                    │                    │                    │                 ├─写_template
+     │                    │                    │                    │                 ├─跨模板汇总
+     │                    │                    │                    │                 └─写_org
+     ├─定时触发向上汇总────┼────────────────────┼────────────────────┼────────────────→│
+     │                    │                    │                    │                 │ (同上流程)

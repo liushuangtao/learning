@@ -1,0 +1,18 @@
+<configuration status="OFF" monitorInterval="60" >
+    <!--
+        如果应用希望自定义log4j2配置，不使用ripplescloud-core-rest中的log4j2配置，
+        则将本文件重命名为log4j2.xml。但不推荐，推荐使用默认配置
+     -->
+    <appenders>
+        <Console name="console" class="org.apache.log4j.ConsoleAppender">
+            <PatternLayout pattern="%d{yyyy-MM-dd HH:mm:ss.SSS} %5p [%t] %c %m%n" />
+        </Console>
+    </appenders>
+
+    <loggers>
+        <AsyncRoot>
+            <AppenderRef level="info" ref="console" />
+        </AsyncRoot>
+    </loggers>
+
+</configuration>

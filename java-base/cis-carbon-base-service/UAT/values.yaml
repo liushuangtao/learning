@@ -1,0 +1,80 @@
+# 副本数
+replicaCount: 1
+
+# 镜像地址组成为：registry.steam.crcloud.com/[project_code]/[application_code]
+# 该字段必须存在
+image:
+  repository: registry.steam.crcloud.com/crcsoft-cis/cis-carbon-base-service
+  pullPolicy: IfNotPresent
+
+# 定义应用运行时所需的环境变量，application.yml文件中的所有值都可转换成环境变量。根据项目需求，open下的值可为空。
+env:
+  open:
+    SPRING_PROFILES_ACTIVE: nacos
+    NACOS_ADDR: 10.133.24.21:30001,10.133.24.35:30001,10.133.24.243:30001
+    NACOS_NAMESPACE: CIS_cc1989e891cc482393b8a8aa5f5629e1
+    NACOS_USERNAME: cisadmin
+    NACOS_PASSWORD: Ciscarbon@2024
+
+service:
+  enabled: true
+  name: cis-carbon-base-service
+  type: ClusterIP
+  port: 8082
+  targetPort: 8082
+# Ingress配置，用于外部访问
+ingress:
+  enabled: false
+  host: cis-carbon-base-service.crc.com.cn
+# 挂载卷配置
+volumes:
+  enabled: false
+  name: ciscarbon-volume-001
+  mountPath: "/app/dev/logs"
+  nfs:
+    server: 10.0.0.0
+    path: "/apps/share/testpv"
+
+monitor:
+  project: cis
+  topic: log-cis
+  service: cis-carbon-base-service
+  env: uat
+
+# pod的资源限制，默认只写内存的请求和限制
+# 跟据应用运行时使用合理设置，后端应用推荐2Gi以上
+resources:
+  # We usually recommend not to specify default resources and to leave this as a conscious
+  # choice for the user. This also increases chances charts run on environments with little
+  # resources,such as Minikube. If you do want to specify resources,uncomment the following
+  # lines,adjust them as necessary,and remove the curly braces after 'resources:'.
+  limits:
+    memory: 2Gi
+    cpu: 1
+  requests:
+    memory: 512Mi
+    cpu: 0.1
+
+# 应用的健康检查，可用于滚动升级，需应用暴露一个健康检查接口
+# 每过30s，执行command的脚本，当状态码为200~300之间则为健康
+# 若应用不健康时流量不会接入
+readinessProbe:
+  httpGet:
+    path: /v1/heartbeat/ping
+    port: 8082
+  failureThreshold: 3
+  initialDelaySeconds: 30
+  periodSeconds: 10
+  successThreshold: 1
+  timeoutSeconds: 3
+
+# 健康检查，不通过时重启容器
+livenessProbe:
+  httpGet:
+    path: /v1/heartbeat/ping
+    port: 8082
+  initialDelaySeconds: 120
+  periodSeconds: 20
+  successThreshold: 1
+  timeoutSeconds: 3
+

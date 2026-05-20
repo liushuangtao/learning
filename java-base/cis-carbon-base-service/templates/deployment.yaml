@@ -1,0 +1,52 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ .Release.Name }}
+  labels:
+{{ include "service.labels.standard" . | indent 4 }}
+spec:
+  replicas: {{ .Values.replicaCount }}
+  selector:
+    matchLabels:
+{{ include "service.labels.standard" . | indent 6 }}
+  template:
+    metadata:
+      annotations:
+      labels:
+        choerodon.io/release: {{ .Release.Name | quote }}
+        topic: {{ .Values.monitor.topic }}
+        project: {{ .Values.monitor.project }}
+        env: {{ .Values.monitor.env }}
+        service: {{ .Values.monitor.service }}
+    spec:
+      imagePullSecrets:
+        - name: crcsoft-cis-docker-registry-secret
+      containers:
+        - name: {{ .Release.Name }}
+          image: "{{ .Values.image.repository }}:{{ .Chart.Version }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy | default "Always" }}
+{{- if not (empty .Values.env.open) }}
+          env:
+{{- range $name, $value := .Values.env.open }}
+{{- if not (empty $value) }}
+          - name: {{ $name | quote }}
+            value: {{ $value | quote }}
+{{- end }}
+{{- end }}
+{{- end }}
+          resources:
+{{ toYaml .Values.resources | indent 12 }}
+          readinessProbe:
+{{ toYaml .Values.readinessProbe | indent 12 }}
+          livenessProbe:
+{{ toYaml .Values.livenessProbe | indent 12 }}
+{{- if .Values.volumes.enabled }}
+          volumeMounts:
+            - mountPath: {{ .Values.volumes.mountPath }}
+              name: {{ .Values.volumes.name }}
+      volumes:
+        - name: {{ .Values.volumes.name }}
+          nfs:
+            server: {{ .Values.volumes.nfs.server }}
+            path: {{ .Values.volumes.nfs.path }}
+{{- end }}

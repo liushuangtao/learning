@@ -1,0 +1,145 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <groupId>carbon</groupId>
+    <artifactId>cis-carbon-base</artifactId>
+    <version>${cis-carbon-base.version}</version>
+    <packaging>pom</packaging>
+
+    <modules>
+        <module>cis-carbon-base-api</module>
+        <module>cis-carbon-base-dao</module>
+        <module>cis-carbon-base-biz</module>
+        <module>cis-carbon-base-rest</module>
+    </modules>
+
+    <properties>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <maven.compiler.source>1.8</maven.compiler.source>
+        <maven.compiler.target>1.8</maven.compiler.target>
+
+        <!-- 定义当前工程版本 idea如报错，解决：setting搜索 Usage of properties in parent description，去掉勾选-->
+        <cis-carbon-base.version>1.0.0-SNAPSHOT</cis-carbon-base.version>
+
+        <ripplescloud-parent.version>2.5.8-SNAPSHOT</ripplescloud-parent.version>
+        <ripplescloud-starter.version>2.5.8-SNAPSHOT</ripplescloud-starter.version>
+        <ripplescloud-common-base.version>2.5.8-SNAPSHOT</ripplescloud-common-base.version>
+
+        <druid-spring-boot.version>1.2.24</druid-spring-boot.version>
+        <druid.version>1.2.24</druid.version>
+    </properties>
+    <dependencyManagement>
+        <!-- 数字化平台版本统一管理 -->
+        <dependencies>
+            <dependency>
+                <groupId>cn.com.crc.ripplescloud</groupId>
+                <artifactId>ripplescloud-parent</artifactId>
+                <version>${ripplescloud-parent.version}</version>
+                <type>pom</type>
+                <scope>import</scope>
+            </dependency>
+           <!-- <dependency>
+                <groupId>cn.com.crc.ripplescloud</groupId>
+                <artifactId>ripplescloud-starter-parent</artifactId>
+                <version>${ripplescloud-parent.version}</version>
+                <type>pom</type>
+                <scope>import</scope>
+            </dependency>-->
+
+            <dependency>
+                <groupId>cn.com.crc.ripplescloud</groupId>
+                <artifactId>ripplescloud-starter-parent</artifactId>
+                <version>${ripplescloud-starter.version}</version>
+                <type>pom</type>
+                <scope>import</scope>
+            </dependency>
+
+            <dependency>
+                <groupId>carbon</groupId>
+                <artifactId>cis-carbon-base-api</artifactId>
+                <version>${cis-carbon-base.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>carbon</groupId>
+                <artifactId>cis-carbon-base-dao</artifactId>
+                <version>${cis-carbon-base.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>carbon</groupId>
+                <artifactId>cis-carbon-base-biz</artifactId>
+                <version>${cis-carbon-base.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.apache.xmlbeans</groupId>
+                <artifactId>xmlbeans</artifactId>
+                <version>3.1.0</version>
+            </dependency>
+            <dependency>
+                <groupId>org.apache.poi</groupId>
+                <artifactId>poi</artifactId>
+                <version>4.1.2</version>
+            </dependency>
+            <dependency>
+                <groupId>com.alibaba</groupId>
+                <artifactId>druid-spring-boot-starter</artifactId>
+                <version>${druid-spring-boot.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.alibaba</groupId>
+                <artifactId>druid</artifactId>
+                <version>${druid.version}</version>
+            </dependency>
+        </dependencies>
+
+    </dependencyManagement>
+
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>org.codehaus.mojo</groupId>
+                <artifactId>flatten-maven-plugin</artifactId>
+                <version>1.1.0</version>
+                <configuration>
+                    <updatePomFile>true</updatePomFile>
+                    <flattenMode>resolveCiFriendliesOnly</flattenMode>
+                </configuration>
+                <executions>
+                    <execution>
+                        <id>flatten</id>
+                        <phase>process-resources</phase>
+                        <goals>
+                            <goal>flatten</goal>
+                        </goals>
+                    </execution>
+                    <execution>
+                        <id>flatten.clean</id>
+                        <phase>clean</phase>
+                        <goals>
+                            <goal>clean</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
+            <plugin>
+                <groupId>org.codehaus.mojo</groupId>
+                <artifactId>exec-maven-plugin</artifactId>
+                <version>1.6.0</version>
+                <executions>
+                    <execution>
+                        <goals>
+                            <goal>java</goal>
+                        </goals>
+                    </execution>
+                </executions>
+                <configuration>
+                    <classpathScope>test</classpathScope>
+                </configuration>
+            </plugin>
+        </plugins>
+    </build>
+
+
+</project>

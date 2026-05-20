@@ -1,0 +1,14 @@
+# helm api 版本
+apiVersion: v1
+# 模板名，同应用目录
+name: cis-carbon-base-service
+# 描述信息
+description: ripplescloud ciscarbonbase service helm deploy
+# 值可以是application或library，通常为application
+type: application
+# 通常情况下每次执行helm打包都要自增
+version: 1.0.0
+
+
+
+
